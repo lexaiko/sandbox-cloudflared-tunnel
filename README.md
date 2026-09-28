@@ -31,6 +31,7 @@ di masa depan) bisa mereplikasi problem solving-nya di lingkungan serupa.
 7. [Autostart (systemd)](#7-autostart-systemd)
 8. [Troubleshooting](#8-troubleshooting)
 9. [Pelajaran yang dipetik](#9-pelajaran-yang-dipetik)
+10. [Keterbatasan: kalau proxy lebih ketat](#10-keterbatasan-kalau-proxy-lebih-ketat)
 
 ---
 
@@ -364,6 +365,31 @@ journalctl -u rp-tunnel.service -f   # atau: tail -f ~/workspace/rp/boot.log
    jangan cuma `enable` lalu berharap.
 6. **Jangan simpan kredensial di repo.** Token & password proxy di file 600 yang
    di-`.gitignore`; password sistem operasi hanya ditampilkan sekali.
+
+---
+
+## 10. Keterbatasan: kalau proxy lebih ketat
+
+Arsitektur utama di atas terbukti jalan di sandbox kami (proxy mengizinkan
+TLS end-to-end ke `*.v2.argotunnel.com:7844`). Tapi **tidak semua proxy
+sebaik itu**.
+
+Hasil replika di mesin lain (arsitektur identik, binary cloudflared asli):
+DNS SRV ✅, fake hosts ✅, relay CONNECT ✅ — tapi **setiap TLS handshake
+ke edge mati** dengan `connection reset by peer` / `proxy closed` tepat
+saat handshake dimulai. Penyebabnya: proxy tersebut melakukan filtering
+berbasis **SNI/ALPN** dan membunuh koneksi begitu melihat tujuan
+`*.v2.argotunnel.com`.
+
+Ini bukan bug di arsitektur — ini **kebijakan proxy**, dan tidak bisa
+diakali dari sisi mesin. Solusinya: jangan biarkan proxy melihat TLS ke
+edge sama sekali.
+
+→ **Lihat `edge-wrap/`**: bungkus data plane tunnel di dalam WebSocket
+(WSS) ke **Cloudflare Worker** milikmu. Proxy hanya melihat HTTPS biasa
+ke `<worker>.workers.dev:443`; Worker yang membuka TCP mentah ke edge.
+cloudflared tetap jalan tanpa modifikasi. Butuh Workers Paid plan
+(TCP sockets API hanya tersedia di paid plan).
 
 ---
 
