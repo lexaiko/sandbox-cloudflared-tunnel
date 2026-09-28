@@ -2,7 +2,10 @@
 """Minimal DNS server (TCP only — UDP send is blocked in this sandbox).
 Listens on 127.0.0.1:53.
 
-- SRV _v2-origintunneld._tcp.argotunnel.com -> region1..4.v2.argotunnel.com:7844
+- SRV _v2-origintunneld._tcp.argotunnel.com -> region1..8.v2.argotunnel.com:7844
+  (semua 8 region, bukan cuma 4 — pool address lebih besar supaya cloudflared
+  tidak kehabisan kandidat saat beberapa region di-blok proxy;
+  pelajaran dari insiden 2026-09-29 00:02: "no free edge addresses")
 - A for faked Cloudflare hosts -> 127.0.0.x (matches hosts bind-mount)
 - everything else -> forwarded to 198.19.0.1:53 over TCP
 """
@@ -33,6 +36,10 @@ SRV_TARGETS = [
     "region2.v2.argotunnel.com",
     "region3.v2.argotunnel.com",
     "region4.v2.argotunnel.com",
+    "region5.v2.argotunnel.com",
+    "region6.v2.argotunnel.com",
+    "region7.v2.argotunnel.com",
+    "region8.v2.argotunnel.com",
 ]
 SRV_PORT = 7844
 

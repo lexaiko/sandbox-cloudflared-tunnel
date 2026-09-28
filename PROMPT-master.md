@@ -129,6 +129,14 @@ Langkah (setiap langkah WAJIB ada verifikasi sebelum lanjut):
   bukan bandwidth). Rampingkan sources.list bila perlu.
 - Setelah reboot tak naik → service tidak enabled / VM di-replace (file di
   luar ~ hilang) → systemctl is-enabled; jalankan ulang setup-autostart.sh.
+- cloudflared HIDUP tapi 0 koneksi edge ("no free edge addresses left to
+  resolve to", retry tak jalan — insiden 2026-09-29 00:02): address pool
+  habis di-backoff (beberapa region di-blok proxy). Service "active" TIDAK
+  berarti tunnel up — cek data plane: ss -tnp | grep 'ESTAB.*:7844.*cloudflared'
+  harus >= 1. Perbaikan: (1) restart service; (2) pastikan SRV dns.py
+  mengembalikan SEMUA region (8, bukan 4) agar pool susah habis;
+  (3) pasang watchdog (ensure_tunnel.sh) yang kill cloudflared bila 0 koneksi
+  selama 3x cek beruntun — rp-boot.sh akan restart otomatis dalam 10 detik.
 
 ## ATURAN KEAMANAN
 Token tunnel & password proxy: hanya di file 600 yang di-.gitignore, tidak
