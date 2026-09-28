@@ -1,0 +1,2 @@
+# Arahkan resolver ke DNS server lokal kita (dns.py listen di 127.0.0.1:53 UDP+TCP)
+nameserver 127.0.0.1

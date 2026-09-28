@@ -1,0 +1,5 @@
+# Kredensial & log — JANGAN pernah di-commit
+.token
+.proxy-env
+*.log
+__pycache__/

@@ -1,0 +1,13 @@
+# Contoh /etc/hosts untuk dibind-mount.
+# Gabungkan dengan isi /etc/hosts asli sandbox kamu, lalu tambahkan blok ini:
+# Setiap IP 127.0.0.x dipetakan ke satu hostname Cloudflare.
+# tcprelay.py memakai IP tujuan untuk tahu hostname aslinya (lihat MAP di tcprelay.py).
+127.0.0.2 api.trycloudflare.com
+127.0.0.3 region1.v2.argotunnel.com
+127.0.0.4 region2.v2.argotunnel.com
+127.0.0.5 region3.v2.argotunnel.com
+127.0.0.6 region4.v2.argotunnel.com
+127.0.0.7 region5.v2.argotunnel.com
+127.0.0.8 region6.v2.argotunnel.com
+127.0.0.9 region7.v2.argotunnel.com
+127.0.0.10 region8.v2.argotunnel.com

@@ -1,0 +1,18 @@
+[Unit]
+Description=Reverse proxy tunnel chain (relay + dns + cloudflared)
+After=network-online.target
+Wants=network-online.target
+RequiresMountsFor=/home/hatch/workspace
+
+[Service]
+Type=simple
+User=root
+# bind-mount faked hosts/resolv.conf into this service's mount namespace
+BindReadOnlyPaths=/home/hatch/workspace/rp/hosts:/etc/hosts
+BindReadOnlyPaths=/home/hatch/workspace/rp/resolv.conf:/etc/resolv.conf
+ExecStart=/home/hatch/workspace/rp/rp-boot.sh
+Restart=always
+RestartSec=15
+
+[Install]
+WantedBy=multi-user.target
