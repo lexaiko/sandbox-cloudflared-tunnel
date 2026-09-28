@@ -18,6 +18,18 @@ di masa depan) bisa mereplikasi problem solving-nya di lingkungan serupa.
 > Semua kredensial dibaca dari file lokal (`$RP/.token`, `$RP/.proxy-env`, permission 600)
 > yang di-exclude via `.gitignore`. Jangan pernah commit file tersebut.
 
+## Prompt siap pakai (untuk Muse lain)
+
+Repo ini adalah **source of truth**. Kalau kamu AI yang dikasih repo ini, mulai dari sini:
+
+| Kamu mau apa | Baca / pakai |
+|---|---|
+| Paham total + replikasi sampai berhasil (disarankan) | `PROMPT-master.md` — metodologi, 13 constraint, jalan buntu, 8 langkah + verifikasi tiap langkah, definisi sukses |
+| Handoff ringkas (sudah paham dasarnya) | `PROMPT-tunneling.md` — versi padat arsitektur + file |
+| Verifikasi ulang di mesin yang dicurigai proxy-nya lebih ketat | `PROMPT-cara-langsung.md` — diagnostik berlapis + uji tentu `openssl s_client` |
+| Paham narasi lengkap perjalanannya | `README.md` (file ini) — tutorial 11 langkah problem solving |
+| Langsung pakai script-nya | `tcprelay.py`, `dns.py`, `rp-boot.sh`, `rp-tunnel.service`, `setup-autostart.sh`, `hosts.example`, `resolv.conf.example` |
+
 ---
 
 ## Daftar Isi
