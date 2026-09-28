@@ -9,6 +9,14 @@ chmod 755 $RP/rp-boot.sh
 chmod 600 $RP/.token 2>/dev/null || true
 chmod 600 $RP/.root_shadow 2>/dev/null || true
 
+# 0. Pastikan cloudflared tersedia (restore dari backup jika VM baru)
+if [ ! -x /usr/bin/cloudflared ]; then
+    echo "cloudflared not found, restoring from backup..."
+    cp $RP/bin/cloudflared /usr/bin/cloudflared
+    chmod +x /usr/bin/cloudflared
+fi
+ln -sf /usr/bin/cloudflared /usr/local/bin/cloudflared
+
 # 1. Pastikan openssh-server terpasang (restore dari deb_cache jika container baru/wiped)
 if ! command -v sshd >/dev/null 2>&1; then
     echo "sshd not found, installing from offline deb_cache..."
@@ -42,5 +50,16 @@ systemctl daemon-reload
 systemctl enable --now rp-tunnel.service
 systemctl enable --now ssh
 
+# 5. Restore agy (Antigravity CLI) binary symlink & auth token
+if [ -f /home/hatch/workspace/bin/agy ]; then
+    mkdir -p /usr/local/bin
+    ln -sf /home/hatch/workspace/bin/agy /usr/local/bin/agy
+fi
+if [ -d /home/hatch/workspace/.gemini/antigravity-cli ]; then
+    mkdir -p /root/.gemini
+    cp -rn /home/hatch/workspace/.gemini/antigravity-cli /root/.gemini/ 2>/dev/null || true
+fi
+
 echo "autostart installed: rp-tunnel + ssh enabled and running"
 systemctl is-enabled rp-tunnel.service ssh
+
