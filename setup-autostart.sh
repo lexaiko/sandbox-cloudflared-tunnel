@@ -9,6 +9,21 @@ chmod 755 $RP/rp-boot.sh
 chmod 600 $RP/.token 2>/dev/null || true
 chmod 600 $RP/.root_shadow 2>/dev/null || true
 
+# Refresh .proxy-env dari env shell saat ini jika tersedia.
+# Password proxy bisa rotate antar sesi (yang lama sejauh ini tetap valid,
+# tapi credential fresh lebih aman untuk VM baru). Aman: hanya overwrite
+# jika http_proxy memang ada di env (sudo tanpa env tidak akan merusak file).
+if [ -n "${http_proxy:-}" ]; then
+    {
+        printf 'http_proxy=%q\n' "$http_proxy"
+        printf 'https_proxy=%q\n' "${https_proxy:-$http_proxy}"
+        printf 'HTTP_PROXY=%q\n' "${HTTP_PROXY:-$http_proxy}"
+        printf 'HTTPS_PROXY=%q\n' "${HTTPS_PROXY:-${https_proxy:-$http_proxy}}"
+    } > $RP/.proxy-env
+    chmod 600 $RP/.proxy-env
+    echo "proxy env refreshed from current shell"
+fi
+
 # 0. Pastikan cloudflared tersedia (restore dari backup jika VM baru)
 if [ ! -x /usr/bin/cloudflared ]; then
     echo "cloudflared not found, restoring from backup..."
