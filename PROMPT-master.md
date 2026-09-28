@@ -135,8 +135,14 @@ Langkah (setiap langkah WAJIB ada verifikasi sebelum lanjut):
   berarti tunnel up — cek data plane: ss -tnp | grep 'ESTAB.*:7844.*cloudflared'
   harus >= 1. Perbaikan: (1) restart service; (2) pastikan SRV dns.py
   mengembalikan SEMUA region (8, bukan 4) agar pool susah habis;
-  (3) pasang watchdog (ensure_tunnel.sh) yang kill cloudflared bila 0 koneksi
-  selama 3x cek beruntun — rp-boot.sh akan restart otomatis dalam 10 detik.
+  (3) pasang watchdog (ensure_tunnel.sh) yang kill cloudflared bila STUCK:
+  definisi stuck = 0 koneksi edge DAN cf-boot.log diam >3 menit (2x cek
+  beruntun) — rp-boot.sh akan restart otomatis dalam 10 detik. PENTING:
+  watchdog HARUS jalan SEBELUM cek "systemctl is-active" + early-exit,
+  kalau tidak ia tak pernah jalan saat service active (bug 2026-09-29,
+  padahal insiden 00:02 persis itu). Jangan bunuh cloudflared yang log-nya
+  masih bergerak (retry aktif) — pelajaran insiden 00:42: retry storm bisa
+  kena throttle proxy, membunuhnya justru memperparah.
 
 ## ATURAN KEAMANAN
 Token tunnel & password proxy: hanya di file 600 yang di-.gitignore, tidak
