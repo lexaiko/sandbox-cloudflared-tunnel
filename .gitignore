@@ -1,5 +1,8 @@
 # Kredensial & log — JANGAN pernah di-commit
 .token
 .proxy-env
+.root_shadow
+deb_cache/
+*.deb
 *.log
 __pycache__/

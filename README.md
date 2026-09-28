@@ -293,7 +293,9 @@ Jebakan saat setup autostart (sudah diperbaiki di script):
 RP=~/workspace/rp   # atau direktori mana pun yang persisten (JANGAN /tmp)
 mkdir -p $RP
 cp tcprelay.py dns.py $RP/
-# siapkan hosts & resolv.conf (lihat hosts.example / resolv.conf.example)
+# buat hosts: salin hosts asli sandbox, lalu tempel blok Cloudflare (sekali saja!)
+cp /etc/hosts $RP/hosts && cat hosts.example >> $RP/hosts
+cp resolv.conf.example $RP/resolv.conf
 printf '%s' '<TUNNEL_TOKEN>' > $RP/.token && chmod 600 $RP/.token
 
 # PENTING: mount + semua proses harus dalam SATU exec call / satu shell,
