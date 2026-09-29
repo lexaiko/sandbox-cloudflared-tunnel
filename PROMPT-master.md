@@ -94,7 +94,7 @@ Langkah (setiap langkah WAJIB ada verifikasi sebelum lanjut):
    CONNECT→proxy→internet valid.
 3. Test DNS: jalankan dns.py, lalu:
    dig @127.0.0.1 SRV _v2-origintunneld._tcp.argotunnel.com
-   VERIFIKASI: dapat jawaban SRV region1-4 dengan port 7844.
+   VERIFIKASI: dapat jawaban SRV 8 region dengan port 7844.
 4. Gabungkan (SATU shell — ingat constraint 11):
    mount --bind hosts & resolv.conf, export proxy env, jalankan relay+dns
    background, lalu: cloudflared tunnel --protocol http2 run --token <TOKEN>

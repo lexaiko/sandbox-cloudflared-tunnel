@@ -24,11 +24,34 @@ if [ -n "${http_proxy:-}" ]; then
     echo "proxy env refreshed from current shell"
 fi
 
-# 0. Pastikan cloudflared tersedia (restore dari backup jika VM baru)
+# 0. Pastikan cloudflared tersedia.
+# Urutan: backup lokal ($RP/bin, persisten) -> download via proxy ->
+# gagal total (instruksi manual). Tanpa fallback download, clone bersih
+# di VM baru tidak bisa one-shot karena binary 40MB tidak ikut ke-commit.
 if [ ! -x /usr/bin/cloudflared ]; then
-    echo "cloudflared not found, restoring from backup..."
-    cp $RP/bin/cloudflared /usr/bin/cloudflared
-    chmod +x /usr/bin/cloudflared
+    if [ -x "$RP/bin/cloudflared" ]; then
+        echo "cloudflared not found, restoring from backup..."
+        cp "$RP/bin/cloudflared" /usr/bin/cloudflared
+        chmod +x /usr/bin/cloudflared
+    else
+        echo "no local cloudflared backup, downloading via proxy..."
+        if [ -f "$RP/.proxy-env" ]; then set -a; . "$RP/.proxy-env"; set +a; fi
+        mkdir -p "$RP/bin"
+        if curl -fSL --retry 2 --max-time 300 \
+                -x "${https_proxy:-$http_proxy}" \
+                -o "$RP/bin/cloudflared" \
+                https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 \
+           && "$RP/bin/cloudflared" --version >/dev/null 2>&1; then
+            cp "$RP/bin/cloudflared" /usr/bin/cloudflared
+            chmod +x /usr/bin/cloudflared
+            echo "cloudflared downloaded OK"
+        else
+            echo "FATAL: cloudflared tidak tersedia dan download gagal."
+            echo "Download manual dari https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/downloads/"
+            echo "lalu taruh di $RP/bin/cloudflared dan jalankan ulang script ini."
+            exit 1
+        fi
+    fi
 fi
 ln -sf /usr/bin/cloudflared /usr/local/bin/cloudflared
 

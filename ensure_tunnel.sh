@@ -19,19 +19,30 @@ fi
 # persis itu: service active, 0 koneksi edge, cloudflared stuck diam.
 #
 # Definisi "stuck": 0 koneksi edge ESTABLISHED dari cloudflared ke relay
-# (127.0.0.x:7844) DAN cf-boot.log diam >3 menit -> kill, rp-boot.sh akan
-# restart cloudflared dalam 10 detik.
-# Kalau log masih bergerak (retry/backoff aktif), JANGAN dibunuh — biarkan
-# cloudflared kerja. Pelajaran insiden 00:42: retry agresif bisa kena
-# throttle proxy; membunuh proses yang sedang retry justru memperparah.
+# (127.0.0.x:7844) DAN salah satu:
+#   (a) cf-boot.log diam >3 menit (2 cek berturut-turut) -> kill, rp-boot.sh
+#       akan restart cloudflared dalam 10 detik.
+#   (b) 0 koneksi selama >10 menit WALAU log bergerak (retry aktif tapi gagal
+#       semua — "doomed retry loop"). Pelajaran insiden 2026-09-29 09:05:
+#       proxy me-reset tiap TLS handshake; retry jalan terus tapi 100% gagal,
+#       aturan (a) tidak akan pernah nembak karena log tidak diam.
+# Kalau 0 koneksi tapi masih dalam 10 menit pertama retry, JANGAN dibunuh —
+# biarkan cloudflared kerja (pelajaran insiden 00:42: retry agresif bisa kena
+# throttle proxy; membunuh proses yang sedang retry justru memperparah).
 # ---------------------------------------------------------------------------
 EDGE_CONNS=$(ss -tnp 2>/dev/null | grep -c 'ESTAB.*:7844.*cloudflared' || true)
 WATCH_STATE=/home/hatch/workspace/rp/.watchdog-state
+ZERO_SINCE=/home/hatch/workspace/rp/.watchdog-zero-since
 CF_LOG=/home/hatch/workspace/rp/cf-boot.log
+NOW=$(date +%s)
+DOOMED_AFTER=600
 if [ "${EDGE_CONNS:-0}" -ge 1 ]; then
     echo 0 > "$WATCH_STATE"
+    echo "$NOW" > "$ZERO_SINCE"
 else
-    LOG_AGE=$(( $(date +%s) - $(stat -c %Y "$CF_LOG" 2>/dev/null || echo 0) ))
+    if [ ! -s "$ZERO_SINCE" ]; then echo "$NOW" > "$ZERO_SINCE"; fi
+    ZERO_AGE=$(( NOW - $(cat "$ZERO_SINCE") ))
+    LOG_AGE=$(( NOW - $(stat -c %Y "$CF_LOG" 2>/dev/null || echo 0) ))
     if [ "$LOG_AGE" -gt 180 ]; then
         N=$(($(cat "$WATCH_STATE" 2>/dev/null || echo 0) + 1))
         echo "$N" > "$WATCH_STATE"
@@ -39,11 +50,17 @@ else
             log "watchdog: 0 edge conns + cf-boot.log diam ${LOG_AGE}s -> kill stuck cloudflared"
             pkill -f '[c]loudflared tunnel' || true
             echo 0 > "$WATCH_STATE"
+            echo "$NOW" > "$ZERO_SINCE"
         else
             log "watchdog: 0 edge conns + cf-boot.log diam ${LOG_AGE}s (${N}/2)"
         fi
+    elif [ "$ZERO_AGE" -gt "$DOOMED_AFTER" ]; then
+        log "watchdog: 0 edge conns selama ${ZERO_AGE}s walau retry aktif -> kill doomed cloudflared"
+        pkill -f '[c]loudflared tunnel' || true
+        echo 0 > "$WATCH_STATE"
+        echo "$NOW" > "$ZERO_SINCE"
     else
-        # cloudflared masih aktif retry (log bergerak) -> jangan ganggu
+        # masih dalam masa tenggang retry -> jangan ganggu
         echo 0 > "$WATCH_STATE"
     fi
 fi
