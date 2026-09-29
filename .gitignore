@@ -6,3 +6,4 @@ deb_cache/
 *.deb
 *.log
 __pycache__/
+ssh_host_keys/

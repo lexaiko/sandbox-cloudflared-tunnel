@@ -47,9 +47,15 @@ print('srv-ok')
 done
 
 # 4. sshd for the tunnel's localhost:22 origin
+# Prefer systemd's ssh.service (socket-activated) when it is enabled/active.
+# Starting a standalone sshd here would steal :22 and make ssh.socket fail
+# every minute (seen 2026-09-29: ssh.service stuck "dependency failed" for 7h
+# because standalone sshd from this step owned the port).
 mkdir -p /run/sshd
-if ! pgrep -x sshd >/dev/null; then
-  /usr/sbin/sshd && echo "sshd started" || echo "sshd start FAILED"
+if systemctl is-active --quiet ssh.service 2>/dev/null; then
+  echo "sshd provided by systemd ssh.service, skipping standalone start"
+elif ! pgrep -x sshd >/dev/null; then
+  /usr/sbin/sshd && echo "sshd started (standalone)" || echo "sshd start FAILED"
 else
   echo "sshd already running"
 fi

@@ -51,6 +51,15 @@ if [ -f "$RP/sshd_config" ]; then
     cp "$RP/sshd_config" /etc/ssh/sshd_config
 fi
 
+# 2b. Restore SSH host keys jika ada backup (hindari warning
+# "host identification changed" di client setelah VM reset)
+if [ -d "$RP/ssh_host_keys" ] && ls "$RP/ssh_host_keys"/ssh_host_* >/dev/null 2>&1; then
+    mkdir -p /etc/ssh
+    cp "$RP/ssh_host_keys"/ssh_host_* /etc/ssh/
+    chmod 600 /etc/ssh/ssh_host_*_key 2>/dev/null || true
+    chmod 644 /etc/ssh/ssh_host_*_key.pub 2>/dev/null || true
+fi
+
 # 3. Restore password root jika ada backup hash
 if [ -f "$RP/.root_shadow" ]; then
     PASS_HASH=$(cat "$RP/.root_shadow")
@@ -64,6 +73,11 @@ cp $RP/rp-tunnel.service /etc/systemd/system/rp-tunnel.service
 systemctl daemon-reload
 systemctl enable --now rp-tunnel.service
 systemctl enable --now ssh
+
+# 4b. Install hatch-panel (web monitor + terminal)
+cp /home/hatch/workspace/panel/hatch-panel.service /etc/systemd/system/hatch-panel.service
+systemctl daemon-reload
+systemctl enable --now hatch-panel.service
 
 # 5. Restore agy (Antigravity CLI) binary symlink & auth token
 if [ -f /home/hatch/workspace/bin/agy ]; then
